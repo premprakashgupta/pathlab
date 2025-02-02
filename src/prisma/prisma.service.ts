@@ -9,7 +9,8 @@ export class PrismaService extends PrismaClient {
                 db:{
                     url:"mysql://root:@localhost:3306/test"
                 }
-            }
+            },
+            log: ['query', 'info', 'warn', 'error'],
         })
     }
 }

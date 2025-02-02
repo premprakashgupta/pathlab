@@ -1,104 +1,233 @@
-// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
 
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
+model LoginDetails {
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  password       String
+  emailVerified  Boolean  @default(false)
+  roleId         Int      
+  role           Role     @relation(fields: [roleId], references: [id]) 
+  patient        Patient?
+  doctor         Doctor?
+  token          Token[]
+  organisation   Organisation?
+  status         LoginDetailsStatus  @default(ACTIVE)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt @default(now())
 }
 
-// Enum for Role - Define it before the models
-enum RoleEnum {
-  super
-  admin
-  staff
-  patient
-}
-
-enum Status {
-  emailRegistered
-  profileSubmitted
-  active
-  inactive
-  suspended
-  deleted
-}
-
-// Organization model
-model Organization {
-  id        Int      @id @default(autoincrement())
-  name      String
-  shortName String
-  address   String
-  image     String
-  branches  Branch[]  // One-to-many relationship with Branches
-  roles     Role[]    // One-to-many relationship with Roles
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// Branch model
-model Branch {
-  id            Int         @id @default(autoincrement())
-  name          String
-  address       String?
-  organization  Organization @relation(fields: [organizationId], references: [id])
-  organizationId Int         // Foreign key to Organization
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  User User[]
-}
-
-// Role model
-model Role {
-  id             Int           @id @default(autoincrement())
-  code           String
-  name           String
-  status         Boolean       @default(true)
-  organization   Organization  @relation(fields: [organizationId], references: [id])
-  organizationId Int           // Foreign key to Organization
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-}
-
-// Token model
 model Token {
-  id            Int        @id @default(autoincrement())
-  token         String
-  loginDetail   LoginDetail @relation(fields: [loginDetailId], references: [id])
-  loginDetailId Int
-  loginAgent    String     @default("patient")
-  deviceId      String
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  id        Int      @id @default(autoincrement())
+  token     String
+  loginDetail LoginDetails @relation(fields: [loginId], references: [id])
+  loginId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
 }
 
-// LoginDetail model
-model LoginDetail {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
-  password  String
-  role      RoleEnum  @default(patient)   // Use the RoleEnum
-  status    Status    @default(emailRegistered)  // Use the Status enum
-  userId    Int?
-  user      User?     @relation(fields: [userId], references: [id])
-  tokens    Token[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+model Role {
+  id             Int      @id @default(autoincrement())
+  name           String   // Human-readable role name
+  code           String   @unique // Unique identifier for the role
+  organisationRole OrganizationRole[]
+  loginDetails    LoginDetails[]
+  status         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt @default(now())
 }
 
-// User model
-model User {
+model OrganizationRole {
+  id             Int            @id @default(autoincrement())
+  organizationId Int
+  organisation   Organisation   @relation(fields: [organizationId], references: [id])
+  roleId         Int
+  role           Role           @relation(fields: [roleId], references: [id])
+  status         Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt @default(now())
+}
+
+model Organisation {
+  id             Int          @id @default(autoincrement())
+  name           String
+  shortName      String
+  image          String
+  phone          Int
+  address        String
+  loginDetail   LoginDetails  @relation(fields: [loginId], references: [id])
+  loginId       Int           @unique // One-to-one with LoginDetails
+  organisationRole OrganizationRole[]
+  branches       Branch[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt @default(now())
+}
+
+model Branch {
+  id           Int           @id @default(autoincrement())
+  name         String
+  address      String
+  phone        String
+  orgId        Int
+  organisation Organisation  @relation(fields: [orgId], references: [id])
+  departments  Department[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt @default(now())
+}
+
+model Department {
   id          Int       @id @default(autoincrement())
-  firstName   String
-  lastName    String
-  image       String?
+  name        String
   branchId    Int
   branch      Branch    @relation(fields: [branchId], references: [id])
-  loginDetails LoginDetail[] // One-to-many relationship with LoginDetails
+  description String?
+  appointments Appointment[]
+  doctors     Doctor[]
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  updatedAt   DateTime  @updatedAt @default(now())
+}
+
+model Patient {
+  id            Int           @id @default(autoincrement())
+  loginDetail   LoginDetails  @relation(fields: [loginId], references: [id])
+  loginId       Int           @unique // One-to-one with LoginDetails
+  appointments  Appointment[]
+  dateOfBirth   DateTime
+  departmentId  Int
+  gender        Gender
+  medicalHistory String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt @default(now())
+}
+
+model Doctor {
+  id            Int           @id @default(autoincrement())
+  loginDetail   LoginDetails  @relation(fields: [loginId], references: [id])
+  loginId       Int           @unique // One-to-one with LoginDetails
+  username      String
+  degree        String
+  certificate   String
+  appointments  Appointment[]
+  department    Department    @relation(fields: [departmentId], references: [id])
+  departmentId  Int
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt @default(now())
+}
+
+model Appointment {
+  id            Int           @id @default(autoincrement())
+  patient       Patient       @relation(fields: [patientId], references: [id])
+  patientId     Int
+  doctor        Doctor?       @relation(fields: [doctorId], references: [id])
+  doctorId      Int?          // Nullable for appointments without a doctor
+  department    Department    @relation(fields: [departmentId], references: [id])
+  testReport    TestReport[]
+  departmentId  Int
+  date          DateTime
+  status        AppointmentStatus
+  documents     Json?
+  tests         AppointmentTest[]
+  payments      Payment[]
+  appoimedicine  AppointmentMedicine[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt @default(now())
+}
+
+model Test {
+  id             Int           @id @default(autoincrement())
+  testName       String
+  appointmentTest AppointmentTest[]
+  testReport     TestReport[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt @default(now())
+}
+
+model AppointmentTest {
+  id             Int           @id @default(autoincrement())
+  appointment    Appointment   @relation(fields: [appointmentId], references: [id])
+  appointmentId  Int
+  test           Test          @relation(fields: [testId], references: [id])
+  testId         Int
+  status         TestStatus
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt @default(now())
+}
+
+model TestReport {
+  id             Int           @id @default(autoincrement())
+  appointment    Appointment   @relation(fields: [appointmentId], references: [id])
+
+  appointmentId  Int
+  test           Test          @relation(fields: [testId], references: [id])
+  testId         Int
+  status         TestStatus
+  report         String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt @default(now())
+}
+
+model AppointmentMedicine {
+  id             Int           @id @default(autoincrement())
+  appointment    Appointment   @relation(fields: [appointmentId], references: [id])
+  appointmentId  Int
+  medicineDocLink String
+  cashmemo       String
+  amount         Int
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt @default(now())
+}
+
+model Payment {
+  id             Int           @id @default(autoincrement())
+  appointment    Appointment   @relation(fields: [appointmentId], references: [id])
+  appointmentId  Int
+  amount         Float
+  paymentMode    PaymentMode
+  status         PaymentStatus
+  transactionId  String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt @default(now())
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum AppointmentStatus {
+  PENDING
+  APPROVED
+  REFERRED
+  COMPLETED
+}
+
+enum TestStatus {
+  OPEN
+  SAMPLE_COLLECTION
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum PaymentMode {
+  ONLINE
+  CASH
+}
+
+enum PaymentStatus {
+  PAID
+  PENDING
+  FAILED
+}
+enum LoginDetailsStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+  BLOCKED
 }

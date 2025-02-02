@@ -7,6 +7,9 @@ export class RegisterDto {
 
   @IsNotEmpty()
   password: string;
+
+  @IsNotEmpty()
+  role:string;
 }
 
 export class LoginDto {
@@ -15,8 +18,5 @@ export class LoginDto {
 
   @IsNotEmpty()
   password: string;
-  @IsNotEmpty()
-  deviceId:string;
-  @IsNotEmpty()
-  loginAgent:string
+ 
 }
