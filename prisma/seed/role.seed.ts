@@ -3,51 +3,51 @@ const prisma = new PrismaClient()
 
 async function main() {
   const patient = await prisma.role.upsert({
-    where: { code: "PATIENT" }, // Ensure this field is unique in your schema
+    where: { code: "ROLE_PATIENT" }, // Ensure this field is unique in your schema
     update: {}, // Required, even if you don't need to update anything
     create: {
       name: "user",
-      code: "PATIENT",
+      code: "ROLE_PATIENT",
       status: true
     },
   })
 
   const organisation = await prisma.role.upsert({
-    where: { code: "ORGANISATION" }, // Ensure this field is unique in your schema
+    where: { code: "ROLE_ORGANISATION" }, // Ensure this field is unique in your schema
     update: {}, // Required, even if you don't need to update anything
     create: {
       name: "organisation",
-      code: "ORGANISATION",
+      code: "ROLE_ORGANISATION",
       status: true
     },
   })
 
   const branch = await prisma.role.upsert({
-    where: { code: "BRANCH" }, // Ensure this field is unique in your schema
+    where: { code: "ROLE_BRANCH" }, // Ensure this field is unique in your schema
     update: {}, // Required, even if you don't need to update anything
     create: {
       name: "branch",
-      code: "BRANCH",
+      code: "ROLE_BRANCH",
       status: true
     },
   })
 
   const department = await prisma.role.upsert({
-    where: { code: "DEPARTMENT" }, // Ensure this field is unique in your schema
+    where: { code: "ROLE_DEPARTMENT" }, // Ensure this field is unique in your schema
     update: {}, // Required, even if you don't need to update anything
     create: {
       name: "department",
-      code: "DEPARTMENT",
+      code: "ROLE_DEPARTMENT",
       status: true
     },
   })
 
   const doctor = await prisma.role.upsert({
-    where: { code: "DOCTOR" }, // Ensure this field is unique in your schema
+    where: { code: "ROLE_DOCTOR" }, // Ensure this field is unique in your schema
     update: {}, // Required, even if you don't need to update anything
     create: {
       name: "doctor",
-      code: "DOCTOR",
+      code: "ROLE_DOCTOR",
       status: true
     },
   })

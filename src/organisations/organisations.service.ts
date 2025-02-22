@@ -1,58 +1,70 @@
 import { BadRequestException, ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { Organisation, Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class OrganisationsService {
-    constructor(readonly prisma:PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-    async createOrganisation(organisationName:string,shortName:string,address:string,image:string,phone:number,loginId:number){
-        
-        try {
-            const sameNameExist=await this.prisma.$queryRaw`SELECT * FROM organisation WHERE name=${organisationName} LIMIT 1;`;
-            if(sameNameExist){
-                throw new BadRequestException(`Organisation with same name is exist`)
-            }
-            const sameShortNameExist=await this.prisma.$queryRaw`SELECT * FROM organisation WHERE shortName=${shortName} LIMIT 1;`;
-            if(sameShortNameExist){
-                throw new BadRequestException(`Organisation with same short name is exist`)
-            }
-            // creating organisation 
-            await this.prisma.$executeRaw`INSERT INTO organisation (name,shortName,address,image,phone,loginId) VALUES (${organisationName},${shortName},${address},${image},${phone},${loginId});`;
-            const [organisation]=await this.prisma.$queryRaw<Organisation[]>`SELECT * FROM organisation WHERE name=${organisationName} AND shortName=${shortName};`;
-            // creating organisation role
+  async createOrganisation(
+    organisationName: string,
+    shortName: string,
+    address: string,
+    image: string,
+    phone: number,
+    email: string
+  ) {
+    try {
+      // Check for organisation with the same name
+      const sameNameExist = await this.prisma.organisation.findFirst({
+        where: { name: organisationName },
+      });
+      if (sameNameExist) {
+        throw new BadRequestException(`Organisation with the same name already exists`);
+      }
 
-            const roles =await this.prisma.$queryRaw<Role[]>`SELECT * FROM role WHERE status=true;`;
+      // Check for organisation with the same short name
+      const sameShortNameExist = await this.prisma.organisation.findFirst({
+        where: { shortName },
+      });
+      if (sameShortNameExist) {
+        throw new BadRequestException(`Organisation with the same short name already exists`);
+      }
 
-            if(roles.length===0){
-                throw new BadRequestException(`There is no any role in the system`);
-            }
+      const isLoginDetailExist=this.prisma.loginDetails.findUnique({
+        where: {email },});
 
-           Promise.all(roles.map(async(role)=>{
-                await this.prisma.$executeRaw`INSERT INTO organisationRole (organisationId,roleId) VALUES (${organisation.id},${role.id});`
-           })) 
-            
-           
+      if (isLoginDetailExist!==null) {
+        throw new BadRequestException(`User with this email exist`); 
+      }
 
-            return organisation;
-        } catch (error) {
-            if (error instanceof ConflictException || error instanceof BadRequestException) {
-                    throw error;
-                  }
-                  console.error(error);
-                  throw new InternalServerErrorException('Something went wrong while registering the user');
-        }
-        
-        // return this.prisma.organization.create({
-        //     data:{
-        //         name:organisationName,
-        //         shortName:shortName,
-        //         address:address,
-        //         image:image,
-        //         phone:phone,
-        //         loginDetail:{connect:{id:loginId}}
+      // create new user credential with auto generate password
+      const findRole=await this.prisma.role.findFirst({where:{name:'ROLE_ORGANISATION'}});
+      if(findRole===null){
+        throw new BadRequestException(`Role with this name not exist`); 
+      }
+      const password = Math.random().toString(36).slice(-8);
+      const login = await this.prisma.loginDetails.create({ data: { email, password,roleId:findRole.id } }); 
 
-        //     }
-        // })
+      // Create the organisation
+      const organisation = await this.prisma.organisation.create({
+        data: {
+          name: organisationName,
+          shortName,
+          address,
+          image,
+          phone,
+          loginId:login.id,
+        },
+      });
+
+
+      return organisation;
+    } catch (error) {
+      if (error instanceof ConflictException || error instanceof BadRequestException) {
+        throw error;
+      }
+      console.error(error);
+      throw new InternalServerErrorException('Something went wrong while registering the organisation');
     }
+  }
 }

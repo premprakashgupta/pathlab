@@ -39,7 +39,7 @@ export class AuthController {
     });
 
     // Send the user object (without the token, as it's in the cookie)
-    return { data:user,message:"Login" };
+    return { data:user,message:"Login successfully" };
   }
 
 

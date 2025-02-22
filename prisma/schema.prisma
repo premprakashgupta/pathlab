@@ -36,23 +36,12 @@ model Role {
   id             Int      @id @default(autoincrement())
   name           String   // Human-readable role name
   code           String   @unique // Unique identifier for the role
-  organisationRole OrganizationRole[]
   loginDetails    LoginDetails[]
   status         Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt @default(now())
 }
 
-model OrganizationRole {
-  id             Int            @id @default(autoincrement())
-  organizationId Int
-  organisation   Organisation   @relation(fields: [organizationId], references: [id])
-  roleId         Int
-  role           Role           @relation(fields: [roleId], references: [id])
-  status         Boolean        @default(true)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt @default(now())
-}
 
 model Organisation {
   id             Int          @id @default(autoincrement())
@@ -63,7 +52,6 @@ model Organisation {
   address        String
   loginDetail   LoginDetails  @relation(fields: [loginId], references: [id])
   loginId       Int           @unique // One-to-one with LoginDetails
-  organisationRole OrganizationRole[]
   branches       Branch[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt @default(now())

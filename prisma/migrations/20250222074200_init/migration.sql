@@ -38,18 +38,6 @@ CREATE TABLE `Role` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `OrganizationRole` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `organizationId` INTEGER NOT NULL,
-    `roleId` INTEGER NOT NULL,
-    `status` BOOLEAN NOT NULL DEFAULT true,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    `updatedAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
 CREATE TABLE `Organisation` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(191) NOT NULL,
@@ -202,12 +190,6 @@ ALTER TABLE `LoginDetails` ADD CONSTRAINT `LoginDetails_roleId_fkey` FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE `Token` ADD CONSTRAINT `Token_loginId_fkey` FOREIGN KEY (`loginId`) REFERENCES `LoginDetails`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `OrganizationRole` ADD CONSTRAINT `OrganizationRole_organizationId_fkey` FOREIGN KEY (`organizationId`) REFERENCES `Organisation`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `OrganizationRole` ADD CONSTRAINT `OrganizationRole_roleId_fkey` FOREIGN KEY (`roleId`) REFERENCES `Role`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Organisation` ADD CONSTRAINT `Organisation_loginId_fkey` FOREIGN KEY (`loginId`) REFERENCES `LoginDetails`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

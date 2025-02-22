@@ -12,14 +12,19 @@ interface AuthenticatedRequest extends ExpressRequest {
   };
 }
 
+interface NewOrganisation extends OrganisationDto {
+  email: string;
+}
+
 @Controller('organisation')
 export class OrganisationsController {
   constructor(private readonly organisationsService: OrganisationsService) {}
 
   @UseGuards(AuthGuard)
   @Post("create")
-    register(@Request() req: AuthenticatedRequest,@Body() organisationDto: OrganisationDto) {
-      const {name,shortName,image,phone,address}=trimValues(organisationDto);
-      return this.organisationsService.createOrganisation(name.trim(),shortName.trim(),address,image,phone,req.user.sub);
+    register(@Request() req: AuthenticatedRequest,@Body() organisationDto: NewOrganisation) {
+      const {name,shortName,image,phone,address,email}=trimValues(organisationDto);
+
+      return this.organisationsService.createOrganisation(name.trim(),shortName.trim(),address,image,phone,email);
     }
 }
